@@ -1,5 +1,4 @@
-import sbtcrossproject.{crossProject, CrossType}
-//import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 lazy val ScalaTestVersion = "3.2.7"
 
@@ -116,7 +115,7 @@ lazy val crossPlatformExample = crossProject(JSPlatform, JVMPlatform)
   .in(file("cross-platform-example"))
   .settings(
     commonSettings,
-    name := "cross-project-example",
+    name := "cross-platform-example",
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % ScalaTestVersion % Test,
     ),
