@@ -43,7 +43,7 @@ lazy val commonSettings = Seq(
 )
 
 ThisBuild / githubWorkflowArtifactUpload := false
-ThisBuild / githubWorkflowJavaVersions := Seq("adopt@1.8")
+ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("8"))
 ThisBuild / githubWorkflowBuildMatrixAdditions += "platform" -> List(
   "jvm",
   "js",
