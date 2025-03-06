@@ -9,9 +9,9 @@ name: Continuous Integration
 
 on:
   pull_request:
-    branches: ['*']
+    branches: ['**']
   push:
-    branches: ['*']
+    branches: ['**']
     tags: [v*]
 
 env:
@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [2.10.7, 2.11.12, 2.12.13, 2.13.5, 3.0.0-RC2]
-        java: [adopt@1.8]
+        java: [temurin@8]
         platform: [jvm, js]
         exclude:
           - platform: js
@@ -34,49 +34,43 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
+      - name: Setup Java (temurin@8)
+        if: matrix.java == 'temurin@8'
+        uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java }}
+          distribution: temurin
+          java-version: 8
+          cache: sbt
 
-      - name: Cache sbt
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-            ~/AppData/Local/Coursier/Cache/v1
-            ~/Library/Caches/Coursier/v1
-          key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Check that workflows are up to date
-        run: sbt ++${{ matrix.scala }} githubWorkflowCheck
+        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
 
       - name: Test cross-scala-example
         if: matrix.platform == 'jvm'
-        run: sbt ++${{ matrix.scala }} crossScalaExample/checkCI
+        run: sbt '++ ${{ matrix.scala }}' crossScalaExample/checkCI
 
       - name: Test cross-platform-example JVM
         if: matrix.platform == 'jvm' && (matrix.scala == '2.11.12' || matrix.scala == '2.12.13' || matrix.scala == '2.13.5' || matrix.scala == '3.0.0-RC2')
-        run: sbt ++${{ matrix.scala }} crossPlatformExampleJVM/checkCI
+        run: sbt '++ ${{ matrix.scala }}' crossPlatformExampleJVM/checkCI
 
       - name: Test cross-platform-example JS
         if: matrix.platform == 'js' && (matrix.scala == '2.11.12' || matrix.scala == '2.12.13' || matrix.scala == '2.13.5' || matrix.scala == '3.0.0-RC2')
-        run: sbt ++${{ matrix.scala }} crossPlatformExampleJS/checkCI
+        run: sbt '++ ${{ matrix.scala }}' crossPlatformExampleJS/checkCI
 
       - name: Test sbt-plugin-example
         if: matrix.platform == 'jvm' && (matrix.scala == '2.10.7' || matrix.scala == '2.12.13')
-        run: sbt ++${{ matrix.scala }} sbtPluginExample/checkCI
+        run: sbt '++ ${{ matrix.scala }}' sbtPluginExample/checkCI
 
       - name: Test java-project-example
         if: matrix.platform == 'jvm' && matrix.scala == '2.12.13'
-        run: sbt ++${{ matrix.scala }} javaProjectExample/checkCI
+        run: sbt '++ ${{ matrix.scala }}' javaProjectExample/checkCI
 
   publish:
     name: Publish Artifacts
@@ -86,31 +80,25 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         scala: [2.12.13]
-        java: [adopt@1.8]
+        java: [temurin@8]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
+      - name: Setup Java (temurin@8)
+        if: matrix.java == 'temurin@8'
+        uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java }}
+          distribution: temurin
+          java-version: 8
+          cache: sbt
 
-      - name: Cache sbt
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-            ~/AppData/Local/Coursier/Cache/v1
-            ~/Library/Caches/Coursier/v1
-          key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: sbt ++${{ matrix.scala }} ci-release
+        run: sbt ci-release
